@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سباق القفز والضرب - مدرسة الوجيز النموذجية</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Tahoma,Arial,sans-serif;background:linear-gradient(160deg,#4facfe,#7b5cff 55%,#ff6ec4);color:#fff;text-align:center;-webkit-user-select:none;user-select:none}
+.wrap{max-width:760px;margin:auto;padding:14px}
+.school{background:rgba(255,255,255,.2);border-radius:18px;padding:8px;font-weight:bold;font-size:15px}
+h1{font-size:30px;margin:12px 0 4px;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+.card{background:#fff;color:#2b2b4a;border-radius:24px;padding:18px;margin:12px 0;box-shadow:0 10px 0 rgba(0,0,0,.18)}
+.btn{border:0;border-radius:18px;padding:14px 28px;font-size:22px;font-weight:bold;color:#fff;background:linear-gradient(#ffb300,#ff6d00);box-shadow:0 6px 0 #b34700;cursor:pointer;font-family:inherit;touch-action:none}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b34700}
+.btn.go{background:linear-gradient(#00e676,#00a152);box-shadow:0 6px 0 #00693a}
+.btn.gas{width:100%;padding:20px;font-size:24px;background:linear-gradient(#ff5252,#c62828);box-shadow:0 8px 0 #7f0000}
+#nm,#ans{width:100%;max-width:340px;font-size:22px;padding:12px;border-radius:14px;border:3px solid #7b5cff;text-align:center;font-family:inherit;margin:8px 0 16px;-webkit-user-select:text;user-select:text}
+#ans{direction:ltr;font-size:34px;font-weight:bold;margin:6px 0 12px;max-width:260px;color:#d81b60}
+.stage{position:relative;border-radius:18px;overflow:hidden;border:4px solid #ffd54f;background:#87ceeb}
+canvas#cv{width:100%;display:block}
+#toast{position:absolute;top:10px;left:0;right:0;font-size:26px;font-weight:bold;color:#fff;text-shadow:0 2px 6px #000;pointer-events:none}
+.info{display:flex;justify-content:space-between;align-items:center;font-weight:bold;margin:8px 4px;font-size:18px}
+.lvl{display:inline-block;background:#7b5cff;color:#fff;border-radius:12px;padding:3px 14px;font-size:14px}
+.q{direction:ltr;font-size:48px;font-weight:bold;margin:10px 0 4px;color:#d81b60}
+.hide{display:none!important}
+@keyframes pop{50%{transform:scale(1.12)}}@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.shake{animation:shake .4s}.popA{animation:pop .5s}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:5}
+.end{font-size:70px;animation:pop 1.2s infinite}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <div class="school">🏫 مدرسة الوجيز النموذجية • الصف الرابع • المعلمة هديل</div>
+  <h1>🏁 سباق القفز والضرب 🏎️</h1>
+
+  <div id="start" class="card">
+    <div style="font-size:64px">🏎️💨🚧</div>
+    <h2>ضرب عدد من منزلة واحدة في مضاعفات 10 ، 100 ، 1000</h2>
+    <p style="font-size:18px">🔴 اضغط على زر البنزين لتسير بسيارتك.<br>🚧 عند الوصول إلى العائق تظهر مسألة: اكتب الإجابة الصحيحة لتقفز سيارتك فوقه!<br>❤️ لديك 5 قلوب، فاحذر من الأخطاء!<br>🏆 اعبر 15 عائقاً لتصل إلى خط النهاية وتفوز!</p>
+    <div style="font-size:18px;font-weight:bold">✏️ اكتب اسمك يا بطل:</div>
+    <input id="nm" maxlength="20" placeholder="اسم الطالب / الطالبة" autocomplete="off"><br>
+    <button class="btn" onclick="startGame()">🚦 ابدأ السباق</button>
+  </div>
+
+  <div id="game" class="hide">
+    <div class="info"><span id="hearts"></span><span id="who"></span><span>🚧 <b id="cnt">0</b> / 15</span></div>
+    <div class="stage">
+      <canvas id="cv" width="800" height="300"></canvas>
+      <div id="toast"></div>
+    </div>
+    <div id="gasBox" style="margin-top:12px"><button class="btn gas" id="gas">🔴 اضغط باستمرار للسير 🏎️💨</button></div>
+    <div id="qBox" class="card hide">
+      <span class="lvl" id="lv"></span>
+      <div class="q" id="qt"></div>
+      <input id="ans" type="text" inputmode="numeric" autocomplete="off" placeholder="؟">
+      <br><button class="btn go" onclick="check()">✅ تحقق</button>
+    </div>
+  </div>
+
+  <div id="end" class="card hide">
+    <div class="end" id="eIcon"></div>
+    <h2 id="eTitle"></h2>
+    <p id="eMsg" style="font-size:19px"></p>
+    <div style="font-size:34px" id="eStars"></div>
+    <button class="btn" onclick="show('start')">🔁 سباق جديد</button>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const fmt=n=>n.toLocaleString('en-US');
+const mod=(a,m)=>((a%m)+m)%m;
+
+// ======== إعدادات يمكن تعديلها ========
+const GOAL=15;   // عدد العوائق (المسائل) حتى خط النهاية
+const MAXH=5;    // عدد القلوب (فرص الخطأ)
+// ======================================
+
+const GOOD=[
+ n=>`🌟 مذهل يا ${n}!`, n=>`🔥 رائع يا ${n}!`, n=>`👏 ممتاز يا ${n}!`,
+ n=>`🚀 عبقري يا ${n}!`, n=>`🏆 أحسنت يا ${n}!`, n=>`💎 إجابة خارقة يا ${n}!`,
+ n=>`⭐ Amazing ${n}!`, n=>`🎉 Great job ${n}!`, n=>`💪 أنت بطل يا ${n}!`
+];
+const BAD=[
+ n=>`💪 حاول مرة أخرى يا ${n}!`, n=>`🌈 لا بأس يا ${n}، أنت تستطيع!`,
+ n=>`🙂 قريب جداً يا ${n}، لا تستسلم!`, n=>`🌟 المحاولة تصنع الأبطال يا ${n}!`,
+ n=>`🔁 Try again ${n}!`
+];
+const LV=['المستوى الأول: × 10 🟢','المستوى الثاني: × 100 🟡','المستوى الثالث: × 1000 🔴'];
+
+// ---------- Sound ----------
+let AC,NB;
+function note(f,t,d,type='triangle',v=.25){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.value=f;o.connect(g);g.connect(AC.destination);
+  const s=AC.currentTime+t;
+  g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(v,s+.02);g.gain.exponentialRampToValueAtTime(.001,s+d);
+  o.start(s);o.stop(s+d+.05);
+}
+function play(seq,gap=.18,type){seq.forEach((f,k)=>f&&note(f,k*gap,gap*1.6,type))}
+// تصفيق: ضربات ضوضاء قصيرة موزعة عشوائياً
+function clap(sec){
+  if(!NB){const len=Math.floor(AC.sampleRate*.07);NB=AC.createBuffer(1,len,AC.sampleRate);
+    const d=NB.getChannelData(0);for(let j=0;j<len;j++)d[j]=(Math.random()*2-1)*Math.pow(1-j/len,3)}
+  const n=Math.floor(sec*30);
+  for(let k=0;k<n;k++){
+    const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+    s.buffer=NB;f.type='bandpass';f.frequency.value=1200+Math.random()*3000;f.Q.value=.7;
+    g.gain.value=.5+Math.random()*.5;
+    s.connect(f);f.connect(g);g.connect(AC.destination);
+    s.start(AC.currentTime+Math.random()*sec);
+  }
+}
+const C=261.6,D=293.7,E=329.6,G=392,A=440,C2=523.3,E2=659.3,G2=784;
+const sfx={
+ ok:()=>play([E2,G2],.1,'square'),
+ no:()=>play([220,170],.15,'sawtooth'),
+ jump:()=>play([C2,E2,G2,C2*2],.07,'square'),
+ win:()=>{play([C,E,G,C2,0,G,C2,E2,G2,0,E2,G2,C2*2,0,C2*2,0,C2*2],.16);clap(5)},
+ lose:()=>{play([E,G,A,G,E,G,C2,0,A,C2,E2,D*2,C2,G,C2],.22);clap(3.5)}
+};
+
+// ---------- Fireworks ----------
+const cv2=$('fx'),cx=cv2.getContext('2d');let P=[],raf=0,until=0;
+function size(){cv2.width=innerWidth;cv2.height=innerHeight}addEventListener('resize',size);size();
+function burst(x,y){
+  const h=rnd(0,360);
+  for(let k=0;k<60;k++){const a=Math.random()*6.28,s=Math.random()*6+2;
+    P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:70+rnd(0,30),c:`hsl(${h+rnd(-40,40)},100%,60%)`})}
+}
+function loopFx(){
+  cx.clearRect(0,0,cv2.width,cv2.height);
+  if(Date.now()<until&&Math.random()<.08)burst(rnd(60,cv2.width-60),rnd(60,cv2.height*.55));
+  P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.07;p.vx*=.99;p.life--;
+    cx.globalAlpha=Math.max(p.life/70,0);cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,3,0,6.28);cx.fill()});
+  P=P.filter(p=>p.life>0);
+  if(P.length||Date.now()<until)raf=requestAnimationFrame(loopFx);else cx.clearRect(0,0,cv2.width,cv2.height);
+}
+function fireworks(ms){until=Date.now()+ms;cancelAnimationFrame(raf);loopFx();for(let k=0;k<4;k++)setTimeout(()=>burst(rnd(80,cv2.width-80),rnd(80,300)),k*250)}
+
+// ---------- Game ----------
+const W=800,H=300,carX=110,GAP=90,SP=520,FIRST=700;
+const Xo=k=>FIRST+k*SP;
+const g=$('cv').getContext('2d');
+let state='idle',i=0,pos=0,v=0,hearts=MAXH,jt=0,bt=0,gasOn=false,name='بطل',cur,running=false,tt;
+
+function show(id){['start','game','end'].forEach(x=>$(x).classList.toggle('hide',x!==id))}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.remove('popA');e.offsetWidth;e.classList.add('popA');clearTimeout(tt);tt=setTimeout(()=>e.textContent='',1800)}
+function hud(){$('hearts').textContent='❤️'.repeat(hearts)+'🖤'.repeat(MAXH-hearts);$('cnt').textContent=i}
+
+function startGame(){
+  name=$('nm').value.trim()||'بطل';
+  AC=AC||new (window.AudioContext||window.webkitAudioContext)();AC.resume();
+  $('who').textContent='🧒 '+name;
+  i=0;pos=0;v=0;hearts=MAXH;jt=0;state='drive';
+  $('qBox').classList.add('hide');$('gasBox').classList.remove('hide');$('toast').textContent='';
+  hud();show('game');
+  if(!running){running=true;frame()}
+}
+function frame(){update();draw();requestAnimationFrame(frame)}
+
+function update(){
+  if(state==='drive'){
+    v=gasOn?Math.min(v+.25,6.5):Math.max(v-.25,0);
+    pos+=v;
+    const target=i<GOAL?Xo(i)-GAP:Xo(GOAL)-20;
+    if(pos>=target){
+      pos=target;v=0;
+      if(i<GOAL){state='ask';askQ()}else finish(true);
+    }
+  }else if(state==='jump'){
+    jt+=1/55;pos+=230/55;
+    if(jt>=1){jt=0;pos=Xo(i)+140;i++;state='drive';hud()}
+  }else if(state==='bump'){
+    if(++bt>22){
+      if(hearts<=0)finish(false);else{state='ask';$('ans').focus()}
+    }
+  }
+}
+
+function draw(){
+  const sky=g.createLinearGradient(0,0,0,215);sky.addColorStop(0,'#4fc3f7');sky.addColorStop(1,'#e1f5fe');
+  g.fillStyle=sky;g.fillRect(0,0,W,215);
+  g.textBaseline='alphabetic';g.font='60px serif';g.fillText('☀️',680,75);
+  g.font='50px serif';
+  for(let c=0;c<4;c++)g.fillText('☁️',mod(c*300-pos*.15,1200)-100,50+(c%2)*30);
+  g.font='54px serif';
+  for(let c=0;c<6;c++)g.fillText(c%2?'🌴':'🌳',mod(c*230-pos*.5,1380)-100,215);
+  g.fillStyle='#43a047';g.fillRect(0,205,W,12);
+  g.fillStyle='#555';g.fillRect(0,217,W,83);
+  g.fillStyle='#ffd54f';g.fillRect(0,217,W,4);
+  g.fillStyle='#fff';
+  for(let x=-mod(pos,90);x<W;x+=90)g.fillRect(x,262,50,5);
+  // العوائق وخط النهاية
+  for(let k=i;k<=GOAL;k++){
+    const sx=carX+Xo(k)-pos;if(sx<-120||sx>W+120)continue;
+    if(k<GOAL){
+      const sh=(state==='bump'&&k===i)?Math.sin(bt)*5:0;
+      g.font='60px serif';g.fillText('🚧',sx+sh,272);
+    }else{
+      for(let r=0;r<8;r++)for(let c=0;c<2;c++){g.fillStyle=(r+c)%2?'#111':'#fff';g.fillRect(sx+c*14,180+r*13,14,13)}
+      g.fillStyle='#fff';g.fillRect(sx-2,170,4,100);
+      g.font='46px serif';g.fillText('🏁',sx+30,215);
+    }
+  }
+  // السيارة
+  const jy=state==='jump'?-Math.sin(Math.PI*jt)*125:0;
+  const bx=state==='bump'?-Math.abs(Math.sin(bt/3))*14:0;
+  if(v>1&&state==='drive'){g.font='34px serif';g.globalAlpha=.7;g.fillText('💨',carX-40,262);g.globalAlpha=1}
+  g.save();g.translate(carX+66+bx,272+jy);
+  g.rotate(state==='jump'?-Math.cos(Math.PI*jt)*.18:0);
+  g.scale(-1,1);g.font='64px serif';g.fillText('🏎️',0,0);g.restore();
+}
+
+// ---------- Questions ----------
+function askQ(){
+  const l=Math.min(2,Math.floor(i/5)),m=[10,100,1000][l];
+  const a=rnd(2,9),k=Math.random()<.2?1:rnd(2,9),f=k*m;
+  cur={ans:a*f};
+  $('qt').textContent=`${a} × ${fmt(f)} = ?`;$('lv').textContent=LV[l];
+  $('ans').value='';$('gasBox').classList.add('hide');$('qBox').classList.remove('hide');
+  $('ans').focus();
+}
+function readAns(){
+  const s=$('ans').value.replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[,،\s]/g,'');
+  return s===''||isNaN(s)?null:Number(s);
+}
+function check(){
+  if(state!=='ask')return;
+  const val=readAns();if(val===null){$('ans').focus();return}
+  if(val===cur.ans){
+    state='jump';jt=0;
+    $('qBox').classList.add('hide');$('gasBox').classList.remove('hide');
+    sfx.jump();clap(1.3);toast(GOOD[rnd(0,GOOD.length-1)](name));
+    burst(innerWidth/2,220);fireworks(500);
+  }else{
+    hearts--;hud();state='bump';bt=0;sfx.no();
+    const a=$('ans');a.classList.remove('shake');a.offsetWidth;a.classList.add('shake');a.value='';
+    toast(hearts>0?BAD[rnd(0,BAD.length-1)](name):'');
+  }
+}
+$('ans').addEventListener('keydown',e=>{if(e.key==='Enter')check()});
+
+// ---------- التحكم بالسيارة ----------
+const gas=$('gas');
+['pointerdown'].forEach(t=>gas.addEventListener(t,e=>{e.preventDefault();gasOn=true}));
+['pointerup','pointerleave','pointercancel'].forEach(t=>gas.addEventListener(t,()=>gasOn=false));
+addEventListener('keydown',e=>{if(state==='drive'&&['ArrowRight','ArrowUp',' '].includes(e.key)){e.preventDefault();gasOn=true}});
+addEventListener('keyup',e=>{if(['ArrowRight','ArrowUp',' '].includes(e.key))gasOn=false});
+
+// ---------- النهاية ----------
+function finish(win){
+  if(state==='end')return;state='end';gasOn=false;
+  const stars=win?(hearts>=4?3:hearts>=2?2:1):0;
+  $('eIcon').textContent=win?'🏆':'💪';
+  $('eTitle').textContent=win?`مبروك يا ${name}! وصلت إلى خط النهاية! 🎉`:`سباق رائع يا ${name}! حاول مرة أخرى 🌈`;
+  $('eMsg').innerHTML=win
+    ?`عبرت جميع العوائق وبقي لديك ${hearts} ❤️<br>أنت نجم الصف الرابع ⭐`
+    :`عبرت <b>${i}</b> من ${GOAL} عائقاً.<br>أنت قريب جداً من الفوز، جرّب مرة ثانية وستفوز! 🚀`;
+  $('eStars').textContent=win?'⭐'.repeat(stars):(i>=8?'⭐⭐':i>=4?'⭐':'🌱');
+  show('end');
+  win?sfx.win():sfx.lose();
+  fireworks(win?6000:3500);
+}
+</script>
+</body>
+</html>
